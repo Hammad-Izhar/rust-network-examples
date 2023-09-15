@@ -1,4 +1,4 @@
-use rust_sockets::Message;
+use guessing_game::Message;
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
 

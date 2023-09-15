@@ -1,5 +1,5 @@
+use guessing_game::Message;
 use rand;
-use rust_sockets::Message;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
