@@ -15,14 +15,18 @@ fn handle_response(mut socket: TcpStream, secret_mutex: Arc<Mutex<u16>>) {
     loop {
         let mut buffer: Vec<u8> = vec![0; 3];
         match socket.read(&mut buffer) {
+            Err(e) => {
+                eprintln!("Failed to read response from socket: {}", e);
+                continue;
+            }
+            Ok(0) => continue,
             Ok(_) => (),
-            Err(e) => eprintln!("Failed to read response from socket: {}", e),
-        }
+        };
 
         let secret = *secret_mutex.lock().unwrap();
         match Message::unmarshal(&buffer) {
             Some(Message::Guess(x)) if x == secret => {
-                send_message(&mut socket, Message::GuessCorrect)
+                send_message(&mut socket, Message::GuessCorrect);
             }
             Some(Message::Guess(x)) if x < secret => {
                 send_message(&mut socket, Message::GuessTooLow)
@@ -50,14 +54,16 @@ fn main() {
 
     println!("Server started and listening at localhost:{}!", port_number);
     let secret_number = Arc::new(Mutex::from(rand::random::<u16>()));
+    {
+        let secret = *secret_number.lock().unwrap();
+        println!("Shhh! The secret number is {}", secret);
+    }
 
     for stream in socket.incoming() {
         match stream {
             Ok(s) => {
                 let cloned_number = secret_number.clone();
-                std::thread::spawn(move || handle_response(s, cloned_number))
-                    .join()
-                    .unwrap();
+                std::thread::spawn(move || handle_response(s, cloned_number));
             }
             Err(e) => {
                 eprintln!("Failed to connect to incoming client: {}", e);

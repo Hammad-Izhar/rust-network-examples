@@ -6,14 +6,19 @@ fn handle_response(mut socket: TcpStream) {
     loop {
         let mut buffer: Vec<u8> = vec![0; 3];
         match socket.read(&mut buffer) {
-            Ok(_) => (),
             Err(e) => eprint!("Failed to read response from socket: {}", e),
+            Ok(0) => continue,
+            Ok(_) => (),
         }
+
         match Message::unmarshal(&buffer) {
             Some(Message::GuessTooLow) => println!("Too low!"),
-            Some(Message::GuessCorrect) => println!("You got it right!"),
+            Some(Message::GuessCorrect) => {
+                println!("You got it right!");
+                std::process::exit(0);
+            }
             Some(Message::GuessTooHigh) => println!("Too high!"),
-            _ => eprintln!("Received invalid reply"),
+            _ => eprintln!("Received invalid reply, {:?}", buffer),
         }
     }
 }
